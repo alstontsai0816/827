@@ -66,8 +66,14 @@
                 <i class="fa-solid fa-graduation-cap text-2xl animate-bounce"></i>
             </div>
             <div>
-                <h1 class="text-2xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Class 827</h1>
-                <p class="text-xs text-indigo-300">新北市立中山國中 827 專屬首頁</p>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-2xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Class 827</h1>
+                    <!-- 雲端同步狀態小燈號 -->
+                    <div id="cloud-sync-indicator" class="hidden flex items-center gap-1 px-2 py-0.5 bg-emerald-950/40 border border-emerald-500/30 rounded-lg text-[10px] text-emerald-400 font-bold">
+                        <i class="fa-solid fa-cloud-arrow-up animate-pulse"></i> 雲端同步中
+                    </div>
+                </div>
+                <p class="text-xs text-indigo-300 mt-0.5">新北市立中山國中 827 專屬首頁</p>
             </div>
         </div>
 
@@ -180,7 +186,7 @@
                 </div>
             </div>
 
-            <!-- 倒數計時 -->
+            <!-- 倒數計時與每日一句 -->
             <div class="glass-panel p-6 rounded-3xl shadow-xl bg-gradient-to-br from-slate-900/40 to-purple-950/15">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-md font-bold text-slate-200 flex items-center gap-2">
@@ -739,6 +745,18 @@
         let pendingAction = null;    
         let pendingPermission = null;
 
+        // 建立一個存檔小幫手，取代直接操作 localStorage
+        function saveData(key, value) {
+            let strValue = typeof value === 'string' ? value : JSON.stringify(value);
+            localStorage.setItem(key, strValue);
+            
+            // 如果雲端準備好了，而且不是正在從雲端抓資料下來，就把變更傳上雲端
+            if (!isSyncing && isCloudReady) {
+                let cloudKey = key.replace('class827_', '');
+                pushToCloud(cloudKey, value);
+            }
+        }
+
         window.onload = function() {
             // 加入安全防護網：確保任何一個功能報錯，都不會牽連其他功能罷工
             try { initSession(); } catch(e) { console.error("Session載入異常", e); }
@@ -778,7 +796,127 @@
             if (quoteEl) {
                 quoteEl.textContent = quotes[Math.floor(Math.random() * quotes.length)];
             }
+
+            // 啟動雲端連線
+            initCloud();
         };
+
+        // ================= 雲端同步系統 =================
+        let db, auth, docRef;
+        let isCloudReady = false;
+        let isSyncing = false;
+
+        async function initCloud() {
+            try {
+                if (typeof __firebase_config === 'undefined') return;
+                const firebaseConfig = JSON.parse(__firebase_config);
+                
+                const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
+                const { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+                const { getFirestore, doc, setDoc, onSnapshot } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                
+                // 設定全班共用的雲端資料夾路徑
+                docRef = doc(db, 'artifacts', appId, 'public', 'data', 'class827_data', 'shared_state');
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        isCloudReady = true;
+                        // 點亮綠色雲端同步燈號
+                        const syncIndicator = document.getElementById('cloud-sync-indicator');
+                        if (syncIndicator) syncIndicator.classList.remove('hidden');
+
+                        // 開始監聽雲端資料變化
+                        onSnapshot(docRef, (snapshot) => {
+                            if (snapshot.exists()) {
+                                syncFromCloud(snapshot.data());
+                            } else {
+                                pushAllToCloud(); // 第一次執行，把本機資料傳上去建立檔案
+                            }
+                        }, (error) => {
+                            console.error("雲端連線中斷", error);
+                        });
+                    }
+                });
+            } catch(e) {
+                console.log("目前為單機模式運作中。");
+            }
+        }
+
+        async function pushToCloud(key, value) {
+            if (!isCloudReady || !docRef) return;
+            try {
+                const { setDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
+                await setDoc(docRef, { [key]: value }, { merge: true });
+            } catch(e) {
+                console.error("上傳至雲端失敗", e);
+            }
+        }
+
+        function pushAllToCloud() {
+            if (!isCloudReady || !docRef) return;
+            const initialData = {
+                passwords: JSON.parse(localStorage.getItem('class827_passwords_list')) || [],
+                links: JSON.parse(localStorage.getItem('class827_links')) || defaultLinks,
+                schedule: JSON.parse(localStorage.getItem('class827_schedule')) || defaultSchedule,
+                todos: JSON.parse(localStorage.getItem('class827_todos')) || defaultTodos,
+                events: JSON.parse(localStorage.getItem('class827_events')) || defaultEvents,
+                feedbacks: JSON.parse(localStorage.getItem('class827_feedbacks')) || [],
+                bulletin: localStorage.getItem('class827_bulletin') || "",
+                countdown: {
+                    title: localStorage.getItem('class827_countdown_title') || "116年國中教育會考",
+                    date: localStorage.getItem('class827_countdown_date') || "2027-05-15"
+                }
+            };
+            import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js").then(({setDoc}) => {
+                setDoc(docRef, initialData, { merge: true });
+            });
+        }
+
+        function syncFromCloud(data) {
+            isSyncing = true; // 鎖住，避免收到更新又傳回去
+            try {
+                if (data.links) { localStorage.setItem('class827_links', JSON.stringify(data.links)); renderLinks(); }
+                if (data.schedule) { localStorage.setItem('class827_schedule', JSON.stringify(data.schedule)); renderSchedule(); }
+                if (data.todos) { localStorage.setItem('class827_todos', JSON.stringify(data.todos)); renderTodos(); }
+                if (data.events) { localStorage.setItem('class827_events', JSON.stringify(data.events)); renderEvents(); }
+                if (data.feedbacks) { localStorage.setItem('class827_feedbacks', JSON.stringify(data.feedbacks)); renderFeedbacks(); }
+                if (data.passwords) { 
+                    localStorage.setItem('class827_passwords_list', JSON.stringify(data.passwords)); 
+                    renderPasswordsList(); 
+                }
+                if (data.countdown) {
+                    localStorage.setItem('class827_countdown_title', data.countdown.title);
+                    localStorage.setItem('class827_countdown_date', data.countdown.date);
+                    const titleEl = document.getElementById('countdown-title');
+                    if(titleEl) titleEl.textContent = `${data.countdown.title} 還有`;
+                    startCountdown(data.countdown.date);
+                }
+                if (data.bulletin !== undefined) {
+                    localStorage.setItem('class827_bulletin', data.bulletin);
+                    const el = document.getElementById('bulletin-text');
+                    // 如果使用者沒有正在打字，才幫他更新畫面上的文字，避免干擾
+                    if (el && document.activeElement !== el) {
+                        el.value = data.bulletin;
+                    }
+                }
+            } catch(e) {
+                console.error("同步解析發生錯誤", e);
+            } finally {
+                isSyncing = false; // 解除鎖定
+            }
+        }
+        // =================================================
 
         // 登入狀態持久化 (防止重新整理後登出)
         function initSession() {
@@ -980,7 +1118,7 @@
                 if (matchedAccount.id === "master") {
                     activePermissions = ["schedule", "links", "countdown", "bulletin", "todos", "passwords", "feedback_admin"];
                     matchedAccount.permissions = activePermissions;
-                    localStorage.setItem('class827_passwords_list', JSON.stringify(passwordsList));
+                    saveData('class827_passwords_list', passwordsList);
                 }
                 
                 currentRole = matchedAccount.label;
@@ -1123,7 +1261,7 @@
                 permissions: selectedPermissions
             });
 
-            localStorage.setItem('class827_passwords_list', JSON.stringify(list));
+            saveData('class827_passwords_list', list);
             renderPasswordsList();
             
             document.getElementById('new-acc-label').value = "";
@@ -1143,7 +1281,7 @@
 
             const accountToDelete = list.find(acc => acc.id === id);
             list = list.filter(acc => acc.id !== id);
-            localStorage.setItem('class827_passwords_list', JSON.stringify(list));
+            saveData('class827_passwords_list', list);
             renderPasswordsList();
             showToast(`已刪除角色：${accountToDelete ? accountToDelete.label : ""}！`);
 
@@ -1204,7 +1342,7 @@
             const myAccount = list.find(acc => acc.id === currentAccountId);
             if (myAccount) {
                 myAccount.password = newPw; 
-                localStorage.setItem('class827_passwords_list', JSON.stringify(list));
+                saveData('class827_passwords_list', list);
                 
                 updateTeacherStatusUI();
                 closeChangeOwnProfileModal();
@@ -1278,7 +1416,7 @@
             
             if (!Array.isArray(links) || (links.length > 0 && links[0].title === "教育部國語辭典")) {
                 links = defaultLinks;
-                localStorage.setItem('class827_links', JSON.stringify(links));
+                saveData('class827_links', links);
             }
 
             const container = document.getElementById('links-container');
@@ -1325,7 +1463,7 @@
         function deleteLink(id) {
             let links = JSON.parse(localStorage.getItem('class827_links')) || [];
             links = links.filter(l => l.id !== id);
-            localStorage.setItem('class827_links', JSON.stringify(links));
+            saveData('class827_links', links);
             renderLinks();
             showToast("捷徑已成功刪除！");
         }
@@ -1398,7 +1536,7 @@
                 color: selectedLinkColor
             });
 
-            localStorage.setItem('class827_links', JSON.stringify(links));
+            saveData('class827_links', links);
             renderLinks();
             closeAddLinkModal();
             showToast("常用連結新增成功！");
@@ -1412,7 +1550,7 @@
 
             if (!schedule || schedule["1-1"] === "國文") {
                 schedule = defaultSchedule;
-                localStorage.setItem('class827_schedule', JSON.stringify(schedule));
+                saveData('class827_schedule', schedule);
             }
 
             const cells = document.querySelectorAll('.schedule-cell');
@@ -1458,12 +1596,30 @@
                     const key = input.getAttribute('data-key');
                     schedule[key] = input.value.trim();
                 });
-                localStorage.setItem('class827_schedule', JSON.stringify(schedule));
+                saveData('class827_schedule', schedule);
 
                 if(btnText) btnText.textContent = "編輯課表";
                 if(btn) btn.className = "text-sm px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all flex items-center gap-1.5 shadow-lg shadow-indigo-500/20";
                 renderSchedule();
                 showToast("課表更新成功！");
+            }
+        }
+
+        function highlightCurrentDay() {
+            const now = new Date();
+            const dayNum = now.getDay();
+            if (dayNum >= 1 && dayNum <= 5) {
+                const colHeaders = document.querySelectorAll('.day-col');
+                colHeaders.forEach(header => {
+                    if (parseInt(header.getAttribute('data-day')) === dayNum) {
+                        header.className += " text-indigo-400 font-black border-b-2 border-indigo-400 pb-1.5";
+                        
+                        const cells = document.querySelectorAll(`.schedule-cell[data-col="${dayNum}"]`);
+                        cells.forEach(c => {
+                            c.classList.add('ring-2', 'ring-indigo-500/30');
+                        });
+                    }
+                });
             }
         }
 
@@ -1511,7 +1667,7 @@
             } catch(e) { events = null; }
             if (!Array.isArray(events)) {
                 events = defaultEvents;
-                localStorage.setItem('class827_events', JSON.stringify(events));
+                saveData('class827_events', events);
             }
             renderEvents();
         }
@@ -1606,7 +1762,7 @@
                 title: title
             });
 
-            localStorage.setItem('class827_events', JSON.stringify(events));
+            saveData('class827_events', events);
             renderEvents();
             closeAddEventModal();
             showToast("行事曆新增成功！");
@@ -1615,7 +1771,7 @@
         function deleteEvent(id) {
             let events = JSON.parse(localStorage.getItem('class827_events')) || [];
             events = events.filter(e => e.id !== id);
-            localStorage.setItem('class827_events', JSON.stringify(events));
+            saveData('class827_events', events);
             renderEvents();
             showToast("事件已刪除！");
         }
@@ -1632,9 +1788,13 @@
                 localStorage.setItem('class827_countdown_date', targetDateStr);
             }
 
-            document.getElementById('countdown-title').textContent = `${targetTitle} 還有`;
-            document.getElementById('target-event-title').value = targetTitle;
-            document.getElementById('target-event-date').value = targetDateStr;
+            const titleEl = document.getElementById('countdown-title');
+            const targetEventTitleEl = document.getElementById('target-event-title');
+            const targetEventDateEl = document.getElementById('target-event-date');
+            
+            if (titleEl) titleEl.textContent = `${targetTitle} 還有`;
+            if (targetEventTitleEl) targetEventTitleEl.value = targetTitle;
+            if (targetEventDateEl) targetEventDateEl.value = targetDateStr;
 
             startCountdown(targetDateStr);
         }
@@ -1700,6 +1860,11 @@
 
             localStorage.setItem('class827_countdown_title', title);
             localStorage.setItem('class827_countdown_date', date);
+            
+            // 手動觸發雲端儲存 (因為這筆資料被我們合併成一個物件)
+            if (!isSyncing && isCloudReady) {
+                pushToCloud('countdown', { title: title, date: date });
+            }
 
             const titleEl = document.getElementById('countdown-title');
             if(titleEl) titleEl.textContent = `${title} 還有`;
@@ -1714,10 +1879,20 @@
             if(bulletinEl) bulletinEl.value = savedText;
         }
 
+        let bulletinTimeout;
         function saveBulletin() {
             if (!activePermissions.includes('bulletin')) return;
             const bulletinEl = document.getElementById('bulletin-text');
-            if(bulletinEl) localStorage.setItem('class827_bulletin', bulletinEl.value);
+            if(bulletinEl) {
+                const text = bulletinEl.value;
+                localStorage.setItem('class827_bulletin', text);
+                
+                // 等停止打字 1 秒後再上傳雲端，避免卡頓
+                clearTimeout(bulletinTimeout);
+                bulletinTimeout = setTimeout(() => {
+                    if (!isSyncing && isCloudReady) pushToCloud('bulletin', text);
+                }, 1000);
+            }
         }
 
         function initTodos() {
@@ -1727,7 +1902,7 @@
             } catch(e) { todos = null; }
             if (!Array.isArray(todos)) {
                 todos = defaultTodos;
-                localStorage.setItem('class827_todos', JSON.stringify(todos));
+                saveData('class827_todos', todos);
             }
             renderTodos();
         }
@@ -1787,7 +1962,7 @@
                 completed: false
             });
 
-            localStorage.setItem('class827_todos', JSON.stringify(todos));
+            saveData('class827_todos', todos);
             input.value = "";
             renderTodos();
             showToast("新增待辦作業！");
@@ -1796,14 +1971,14 @@
         function toggleTodo(id) {
             let todos = JSON.parse(localStorage.getItem('class827_todos')) || [];
             todos = todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
-            localStorage.setItem('class827_todos', JSON.stringify(todos));
+            saveData('class827_todos', todos);
             renderTodos();
         }
 
         function deleteTodo(id) {
             let todos = JSON.parse(localStorage.getItem('class827_todos')) || [];
             todos = todos.filter(t => t.id !== id);
-            localStorage.setItem('class827_todos', JSON.stringify(todos));
+            saveData('class827_todos', todos);
             renderTodos();
             showToast("作業已被移除！");
         }
@@ -1817,7 +1992,7 @@
             } catch(e) { feedbacks = null; }
             if (!Array.isArray(feedbacks)) {
                 feedbacks = []; 
-                localStorage.setItem('class827_feedbacks', JSON.stringify(feedbacks));
+                saveData('class827_feedbacks', feedbacks);
             }
         }
 
@@ -1870,7 +2045,7 @@
                 replyTimestamp: ""
             });
 
-            localStorage.setItem('class827_feedbacks', JSON.stringify(feedbacks));
+            saveData('class827_feedbacks', feedbacks);
             input.value = ""; 
             renderFeedbacks();
             showToast("🎉 已成功送出！我們會盡快回覆。", "sky-400");
@@ -1895,7 +2070,7 @@
                 return fb;
             });
 
-            localStorage.setItem('class827_feedbacks', JSON.stringify(feedbacks));
+            saveData('class827_feedbacks', feedbacks);
             renderFeedbacks();
             showToast("✅ 回覆已更新！");
         }
