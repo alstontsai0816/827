@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>827 班級專屬首頁 | Class 827 Hub</title>
+    <!-- 新增網頁標籤左邊的小圖示 (Favicon) -->
     <link rel="icon" href="favicon.png" type="image/png">
+    <!-- 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 載入 FontAwesome 圖示 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 載入 Google 字型 Noto Sans TC -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
         body {
@@ -57,6 +61,7 @@
 </head>
 <body class="text-slate-100 overflow-x-hidden pb-12">
 
+    <!-- 頂部導覽列與時間資訊 -->
     <header class="w-full px-6 py-4 flex flex-col lg:flex-row justify-between items-center gap-4 border-b border-slate-900/80 bg-slate-950/55">
         <div class="flex items-center gap-3">
             <div class="bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 text-white p-2.5 rounded-2xl shadow-lg shadow-indigo-500/20">
@@ -65,17 +70,21 @@
             <div>
                 <div class="flex items-center gap-2">
                     <h1 class="text-2xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Class 827</h1>
-                    <div id="cloud-sync-indicator" class="hidden flex items-center gap-1 px-2 py-0.5 bg-emerald-950/40 border border-emerald-500/30 rounded-lg text-[10px] text-emerald-400 font-bold">
-                        <i class="fa-solid fa-cloud-arrow-up animate-pulse"></i> 雲端同步中
+                    <!-- 雲端同步狀態小燈號 -->
+                    <div id="cloud-sync-indicator" class="hidden flex items-center gap-1 px-2 py-0.5 bg-emerald-950/40 border border-emerald-500/30 rounded-lg text-[10px] text-emerald-400 font-bold transition-opacity">
+                        <i class="fa-solid fa-cloud-arrow-up animate-pulse"></i> 同步中
                     </div>
                 </div>
                 <p class="text-xs text-indigo-300 mt-0.5">新北市立中山國中 827 專屬首頁</p>
             </div>
         </div>
 
+        <!-- 教師管理鎖定狀態顯示區 -->
         <div id="teacher-status-panel" class="flex items-center gap-2 glass-panel py-2 px-4 rounded-2xl text-xs sm:text-sm">
-            </div>
+            <!-- 由 JS 動態注入解鎖/鎖定狀態 -->
+        </div>
 
+        <!-- 動態時鐘面板 -->
         <div class="flex items-center gap-6 glass-panel py-2 px-5 rounded-2xl">
             <div class="text-right">
                 <div id="current-date" class="text-sm font-medium text-slate-300">2026年05月21日</div>
@@ -88,10 +97,13 @@
         </div>
     </header>
 
+    <!-- 主內容區 -->
     <main class="max-w-[1400px] mx-auto px-4 mt-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
         
+        <!-- 左側面板：搜尋、抽籤、捷徑、倒數 (占 4/12 寬) -->
         <section class="lg:col-span-4 flex flex-col gap-6">
             
+            <!-- 搜尋引擎區 (唯一免密碼) -->
             <div class="glass-panel p-6 rounded-3xl shadow-xl border-l-4 border-indigo-500">
                 <h3 class="text-md font-bold text-slate-200 mb-4 flex items-center gap-2">
                     <i class="fa-solid fa-magnifying-glass text-indigo-400"></i>
@@ -99,6 +111,7 @@
                 </h3>
                 <form id="search-form" action="https://www.google.com/search" method="get" target="_blank">
                     <div class="flex flex-col gap-3">
+                        <!-- 搜尋引擎切換按鈕 -->
                         <div class="grid grid-cols-3 gap-1 bg-slate-950/80 p-1 rounded-xl text-xs text-center font-bold border border-slate-800">
                             <button type="button" id="btn-google" class="engine-tab py-1.5 rounded-lg bg-indigo-600 text-white transition-all" onclick="setSearchEngine('google')">Google</button>
                             <button type="button" id="btn-youtube" class="engine-tab py-1.5 rounded-lg text-slate-400 hover:text-white transition-all" onclick="setSearchEngine('youtube')">YouTube</button>
@@ -116,6 +129,7 @@
                 </form>
             </div>
 
+            <!-- 隨機抽籤系統 -->
             <div class="glass-panel p-6 rounded-3xl shadow-xl flex flex-col justify-between relative overflow-hidden">
                 <div class="absolute -right-4 -top-4 text-emerald-500/10 text-9xl pointer-events-none select-none">
                     <i class="fa-solid fa-dice"></i>
@@ -148,6 +162,7 @@
                 </div>
             </div>
 
+            <!-- 常用連結 -->
             <div class="glass-panel p-6 rounded-3xl shadow-xl flex flex-col justify-between">
                 <div>
                     <div class="flex justify-between items-center mb-4">
@@ -164,15 +179,14 @@
                             </button>
                         </div>
                     </div>
-
-                    <div id="links-container" class="grid grid-cols-3 gap-3">
-                    </div>
+                    <div id="links-container" class="grid grid-cols-3 gap-3"></div>
                 </div>
                 <div class="mt-4 pt-3 border-t border-slate-800/40 text-center">
                     <span class="text-[11px] text-slate-500"><i class="fa-solid fa-lock mr-1"></i>新增與刪除功能需要登入權限</span>
                 </div>
             </div>
 
+            <!-- 倒數計時與每日一句 -->
             <div class="glass-panel p-6 rounded-3xl shadow-xl bg-gradient-to-br from-slate-900/40 to-purple-950/15">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-md font-bold text-slate-200 flex items-center gap-2">
@@ -209,6 +223,7 @@
                     </div>
                 </div>
                 
+                <!-- 每日一句 -->
                 <div class="mt-4 pt-4 border-t border-slate-800/60 text-center">
                     <p class="text-xs text-slate-400 italic" id="daily-quote"></p>
                 </div>
@@ -216,8 +231,10 @@
 
         </section>
 
+        <!-- 右側面板：課表、行事曆與公佈欄 (占 8/12 寬) -->
         <section class="lg:col-span-8 flex flex-col gap-6">
             
+            <!-- 班級課表 -->
             <div class="glass-panel p-6 rounded-3xl shadow-xl">
                 <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-6">
                     <div>
@@ -239,21 +256,11 @@
                         <thead>
                             <tr class="border-b border-slate-800">
                                 <th class="py-3 text-sm font-semibold text-slate-450 w-28">節次 / 時間</th>
-                                <th class="py-3 text-sm font-semibold text-slate-200 day-col" data-day="1">
-                                    週一 <span class="block text-[11px] font-medium text-indigo-400 mt-0.5">(運動服)</span>
-                                </th>
-                                <th class="py-3 text-sm font-semibold text-slate-200 day-col" data-day="2">
-                                    週二 <span class="block text-[11px] font-medium text-indigo-400 mt-0.5">(制服)</span>
-                                </th>
-                                <th class="py-3 text-sm font-semibold text-slate-200 day-col" data-day="3">
-                                    週三 <span class="block text-[11px] font-medium text-indigo-400 mt-0.5">(班服)</span>
-                                </th>
-                                <th class="py-3 text-sm font-semibold text-slate-200 day-col" data-day="4">
-                                    週四 <span class="block text-[11px] font-medium text-indigo-400 mt-0.5">(運動服)</span>
-                                </th>
-                                <th class="py-3 text-sm font-semibold text-slate-200 day-col" data-day="5">
-                                    週五 <span class="block text-[11px] font-medium text-indigo-400 mt-0.5">(運動服)</span>
-                                </th>
+                                <th class="py-3 text-sm font-semibold text-slate-200 day-col" data-day="1">週一 <span class="block text-[11px] font-medium text-indigo-400 mt-0.5">(運動服)</span></th>
+                                <th class="py-3 text-sm font-semibold text-slate-200 day-col" data-day="2">週二 <span class="block text-[11px] font-medium text-indigo-400 mt-0.5">(制服)</span></th>
+                                <th class="py-3 text-sm font-semibold text-slate-200 day-col" data-day="3">週三 <span class="block text-[11px] font-medium text-indigo-400 mt-0.5">(班服)</span></th>
+                                <th class="py-3 text-sm font-semibold text-slate-200 day-col" data-day="4">週四 <span class="block text-[11px] font-medium text-indigo-400 mt-0.5">(運動服)</span></th>
+                                <th class="py-3 text-sm font-semibold text-slate-200 day-col" data-day="5">週五 <span class="block text-[11px] font-medium text-indigo-400 mt-0.5">(運動服)</span></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-800/40 text-sm">
@@ -289,12 +296,10 @@
                                 <td class="p-1"><div class="schedule-cell p-2 rounded-xl" data-row="4" data-col="4">英文</div></td>
                                 <td class="p-1"><div class="schedule-cell p-2 rounded-xl" data-row="4" data-col="5">國文</div></td>
                             </tr>
-                            
                             <tr class="bg-slate-950/40 text-[11px] text-slate-400 tracking-widest font-bold">
                                 <td class="py-1 bg-slate-950/60 font-black text-rose-300">午休時間</td>
                                 <td colspan="5" class="py-1 text-center text-slate-300">11:50 ~ 13:10  用餐、午休時間</td>
                             </tr>
-
                             <tr class="hover:bg-slate-850/10">
                                 <td class="py-2.5 font-bold text-indigo-400 bg-slate-950/20 text-xs">第五節<span class="block text-[10px] font-normal text-slate-400 mt-0.5">13:10 ~ 13:55</span></td>
                                 <td class="p-1"><div class="schedule-cell p-2 rounded-xl" data-row="5" data-col="1">體育</div></td>
@@ -332,7 +337,9 @@
                 </div>
             </div>
 
+            <!-- 班級公佈欄 / 今日作業清單 / 行事曆 -->
             <div class="flex flex-col md:flex-row gap-6 flex-1 min-h-[350px]">
+                <!-- 左半部：大黑板 -->
                 <div class="glass-panel p-6 rounded-3xl shadow-xl flex-1 relative group flex flex-col">
                     <h3 class="text-md font-bold text-slate-200 mb-3 flex items-center gap-2">
                         <i class="fa-solid fa-bullhorn text-rose-400 animate-pulse"></i>
@@ -350,8 +357,10 @@
                         oninput="saveBulletin()"></textarea>
                 </div>
                 
+                <!-- 右半部：作業清單 與 行事曆 -->
                 <div class="w-full md:w-80 flex flex-col gap-6">
                     
+                    <!-- 今日作業 -->
                     <div class="glass-panel p-6 rounded-3xl shadow-xl flex-1 flex flex-col">
                         <h3 class="text-md font-bold text-slate-200 mb-3 flex items-center gap-2">
                             <i class="fa-solid fa-list-check text-emerald-400"></i>
@@ -360,24 +369,26 @@
                         <div id="todo-list" class="space-y-2 flex-1 overflow-y-auto no-scrollbar pr-1 min-h-[120px]">
                         </div>
                         <div class="mt-4 flex gap-2">
-                        <input type="text" id="todo-input" placeholder="新增作業..." class="flex-1 glass-input py-1.5 px-3 rounded-xl text-xs text-white focus:outline-none">
-                        <button type="button" id="todo-add-btn" onclick="checkTeacherAccess(addTodo, 'todos')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1">
-                            <i class="fa-solid fa-plus text-[10px]"></i> 新增
-                        </button>
+                            <input type="text" id="todo-input" placeholder="新增作業..." class="flex-1 glass-input py-1.5 px-3 rounded-xl text-xs text-white focus:outline-none">
+                            <button type="button" id="todo-add-btn" onclick="checkTeacherAccess(addTodo, 'todos')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1">
+                                <i class="fa-solid fa-plus text-[10px]"></i> 新增
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                <div class="glass-panel p-6 rounded-3xl shadow-xl flex-1 flex flex-col border-t-4 border-amber-500">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-md font-bold text-slate-200 flex items-center gap-2">
-                            <i class="fa-regular fa-calendar text-amber-400"></i>
-                            重要行事曆
-                        </h3>
-                        <button type="button" onclick="checkTeacherAccess(openAddEventModal, 'bulletin')" class="text-xs text-slate-400 hover:text-white transition-colors">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
-                    </div>
-                    <div id="calendar-list" class="space-y-3 flex-1 overflow-y-auto no-scrollbar pr-1 min-h-[100px]">
+                    <!-- 班級重要行事曆 -->
+                    <div class="glass-panel p-6 rounded-3xl shadow-xl flex-1 flex flex-col border-t-4 border-amber-500">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md font-bold text-slate-200 flex items-center gap-2">
+                                <i class="fa-regular fa-calendar text-amber-400"></i>
+                                重要行事曆
+                            </h3>
+                            <button type="button" onclick="checkTeacherAccess(openAddEventModal, 'bulletin')" class="text-xs text-slate-400 hover:text-white transition-colors">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="calendar-list" class="space-y-3 flex-1 overflow-y-auto no-scrollbar pr-1 min-h-[100px]">
+                            <!-- 動態繪製行事曆事件 -->
                         </div>
                     </div>
 
@@ -388,11 +399,13 @@
 
     </main>
 
+    <!-- 右下角浮動按鈕：問題回報與許願池 (防重整設為 type=button) -->
     <button type="button" onclick="openFeedbackModal()" class="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-sky-500 to-blue-600 text-white p-3.5 rounded-full shadow-[0_0_20px_rgba(56,189,248,0.4)] hover:scale-110 hover:shadow-[0_0_25px_rgba(56,189,248,0.6)] transition-all flex items-center gap-2">
         <i class="fa-solid fa-comment-dots text-xl"></i>
         <span class="text-sm font-bold hidden sm:inline px-1">問題與許願</span>
     </button>
 
+    <!-- 模組視窗：問題回報與許願池 -->
     <div id="feedback-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
         <div class="glass-panel p-6 rounded-3xl w-full max-w-2xl border border-slate-700 mx-4 flex flex-col max-h-[85vh]">
             <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
@@ -418,11 +431,13 @@
             <div class="flex-1 overflow-y-auto no-scrollbar border-t border-slate-800 pt-4">
                 <h4 class="text-xs font-bold text-slate-400 mb-3 tracking-widest"><i class="fa-solid fa-clock rotate-180"></i> 歷史回報與回覆紀錄</h4>
                 <div id="feedback-list-container" class="space-y-4">
-                    </div>
+                    <!-- 由 JS 動態繪製 -->
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- 模組視窗：新增行事曆事件 -->
     <div id="add-event-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
         <div class="glass-panel p-6 rounded-3xl w-full max-w-sm border border-slate-700 mx-4">
             <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
@@ -450,6 +465,7 @@
         </div>
     </div>
 
+    <!-- 模組視窗：新增快捷連結 -->
     <div id="add-link-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
         <div class="glass-panel p-6 rounded-3xl w-full max-w-sm border border-slate-700 mx-4">
             <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
@@ -484,22 +500,6 @@
                             <i class="fa-solid fa-graduation-cap text-amber-400 block text-lg mb-1"></i>
                             <span class="text-[9px] text-slate-300">教育</span>
                         </button>
-                        <button type="button" onclick="selectLinkStyle('red', 'fa-video')" class="style-choice-btn border border-slate-700 bg-slate-950 p-2 rounded-xl text-center">
-                            <i class="fa-solid fa-video text-red-400 block text-lg mb-1"></i>
-                            <span class="text-[9px] text-slate-300">影音</span>
-                        </button>
-                        <button type="button" onclick="selectLinkStyle('yellow', 'fa-star')" class="style-choice-btn border border-slate-700 bg-slate-950 p-2 rounded-xl text-center">
-                            <i class="fa-solid fa-star text-yellow-400 block text-lg mb-1"></i>
-                            <span class="text-[9px] text-slate-300">星號</span>
-                        </button>
-                        <button type="button" onclick="selectLinkStyle('sky', 'fa-chart-pie')" class="style-choice-btn border border-slate-700 bg-slate-950 p-2 rounded-xl text-center">
-                            <i class="fa-solid fa-chart-pie text-sky-400 block text-lg mb-1"></i>
-                            <span class="text-[9px] text-slate-300">圖表</span>
-                        </button>
-                        <button type="button" onclick="selectLinkStyle('purple', 'fa-music')" class="style-choice-btn border border-slate-700 bg-slate-950 p-2 rounded-xl text-center">
-                            <i class="fa-solid fa-music text-purple-400 block text-lg mb-1"></i>
-                            <span class="text-[9px] text-slate-300">音樂</span>
-                        </button>
                     </div>
                 </div>
                 <div class="flex gap-2 pt-2">
@@ -514,6 +514,7 @@
         </div>
     </div>
 
+    <!-- 模組視窗：設定倒數計時 -->
     <div id="countdown-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
         <div class="glass-panel p-6 rounded-3xl w-full max-w-sm border border-slate-700 mx-4">
             <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
@@ -541,6 +542,7 @@
         </div>
     </div>
 
+    <!-- 模組視窗：帳號登入 -->
     <div id="teacher-login-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
         <div class="glass-panel p-6 rounded-3xl w-full max-w-sm border border-slate-700 mx-4">
             <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
@@ -567,6 +569,7 @@
         </div>
     </div>
 
+    <!-- 模組視窗：帳號與權限管理中心 -->
     <div id="passwords-manager-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
         <div class="glass-panel p-6 rounded-3xl w-full max-w-4xl border border-slate-700 mx-4 max-h-[90vh] overflow-y-auto no-scrollbar">
             <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-3">
@@ -580,12 +583,14 @@
             </div>
             
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- 左側：現有帳號列表 -->
                 <div class="lg:col-span-7 flex flex-col gap-4">
                     <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider"><i class="fa-solid fa-list mr-1"></i> 現有帳號與權限配給</h4>
                     <div id="passwords-accounts-list" class="space-y-3 max-h-[40vh] overflow-y-auto no-scrollbar pr-1">
                     </div>
                 </div>
 
+                <!-- 右側：新增密碼區 -->
                 <div class="lg:col-span-5 bg-slate-950/40 p-4 rounded-2xl border border-slate-850 space-y-4">
                     <h4 class="text-xs font-bold text-pink-400 uppercase tracking-wider"><i class="fa-solid fa-user-plus mr-1"></i> 快速新增管理密碼</h4>
                     <p class="text-[10px] text-slate-500 leading-tight">💡 提示：若您建立一組「完全不勾選任何權限」的帳號，該帳號登入後將僅能檢視網頁，並使用右下角回報功能 (一般學生帳號)。</p>
@@ -630,10 +635,12 @@
                     </div>
                 </div>
 
+                <!-- 底部：操作紀錄區塊 (僅主管理員可見) -->
                 <div id="admin-audit-section" class="lg:col-span-12 mt-2 hidden border-t border-slate-800 pt-6">
                     <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3"><i class="fa-solid fa-clock-rotate-left mr-1"></i> 網頁修改紀錄 (僅主管理員可見)</h4>
                     <div id="audit-logs-container" class="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 h-40 overflow-y-auto no-scrollbar space-y-2 text-xs">
-                        </div>
+                        <!-- 由 JS 動態生成紀錄 -->
+                    </div>
                 </div>
 
             </div>
@@ -646,6 +653,7 @@
         </div>
     </div>
 
+    <!-- 模組視窗：修改個人密碼 -->
     <div id="change-own-profile-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
         <div class="glass-panel p-6 rounded-3xl w-full max-w-sm border border-slate-700 mx-4">
             <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
@@ -659,7 +667,8 @@
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">您的帳號名稱</label>
                     <div id="own-current-label-display" class="w-full bg-slate-950/60 border border-slate-800/80 py-2.5 px-3 rounded-xl text-sm text-slate-400 select-none">
-                        </div>
+                        <!-- 由 JS 填入目前的角色名稱 -->
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs text-slate-400 mb-1">新密碼 (請輸入要變更的密碼)</label>
@@ -681,6 +690,7 @@
         </div>
     </div>
 
+    <!-- 內建輕量自訂訊息提示 (調整至右上角防遮擋) -->
     <div id="toast" class="fixed top-6 right-6 glass-panel py-3 px-6 rounded-2xl shadow-2xl flex items-center gap-2 text-sm text-emerald-400 border border-emerald-500/30 transform -translate-y-20 opacity-0 transition-all duration-300 z-[100]">
         <i class="fa-solid fa-circle-check"></i>
         <span id="toast-message">儲存成功！</span>
@@ -1173,7 +1183,7 @@
                 if (matchedAccount.id === "master") {
                     activePermissions = ["schedule", "links", "countdown", "bulletin", "todos", "passwords", "feedback_admin"];
                     matchedAccount.permissions = activePermissions;
-                    saveData('class827_passwords_list', passwordsList);
+                    localStorage.setItem('class827_passwords_list', JSON.stringify(passwordsList));
                 }
                 
                 currentRole = matchedAccount.label;
